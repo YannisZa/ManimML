@@ -4,12 +4,13 @@ import numpy as np
 from manim import *
 from manim_ml.neural_network.layers.feed_forward import FeedForwardLayer
 from manim_ml.neural_network.layers.parent_layers import ConnectiveLayer
+from manim_ml.neural_network.layers.input_layer import InputLayer
 import manim_ml
 
-class FeedForwardToFeedForward(ConnectiveLayer):
-    """Layer for connecting FeedForward layer to FeedForwardLayer"""
+class InputToFeedForward(ConnectiveLayer):
+    """Layer for connecting InputOutput layer to FeedForwardLayer"""
 
-    input_class = FeedForwardLayer
+    input_class = InputLayer
     output_class = FeedForwardLayer
 
     def __init__(
@@ -71,7 +72,7 @@ class FeedForwardToFeedForward(ConnectiveLayer):
     def make_forward_pass_animation(
         self, layer_args={}, run_time=1, feed_forward_dropout=0.0, **kwargs
     ):
-        """Animation for passing information from one FeedForwardLayer to the next"""
+        """Animation for passing information from the InputLayer to the FeedForwardLayer"""
         path_animations = []
         dots = []
         for edge_index, edge in enumerate(self.edges):
@@ -109,7 +110,7 @@ class FeedForwardToFeedForward(ConnectiveLayer):
     def make_backward_pass_animation(
         self, layer_args={}, run_time=1, feed_forward_dropout=0.0, **kwargs
     ):
-        """Animation for passing information from the next FeedForwardLayer to the previous"""
+        """Animation for passing information from the FeedForwardLayer to the InputLayer"""
         path_animations = []
         dots = []
         for edge_index, _edge in enumerate(self.edges):
@@ -123,7 +124,7 @@ class FeedForwardToFeedForward(ConnectiveLayer):
                     radius=self.dot_radius,
                 )
                 edge = _edge.copy()
-                edge.put_start_and_end_on(edge.get_end(),edge.get_start())
+                edge = edge.put_start_and_end_on(_edge.get_end(), _edge.get_start())
                 # Add to dots group
                 dots.append(dot)
                 # Make the animation

@@ -1,11 +1,11 @@
 from argparse import Namespace
 from manim import *
 import manim
-from manim_ml.utils.colorschemes.colorschemes import light_mode, dark_mode, ColorScheme
+from manim_ml.utils.colorschemes.colorschemes import ColorScheme, light_mode, dark_mode
 
 class ManimMLConfig:
 
-    def __init__(self, default_color_scheme=dark_mode):
+    def __init__(self, default_color_scheme=light_mode):
         self._color_scheme = default_color_scheme
         self.three_d_config = Namespace(
             three_d_x_rotation = 90 * DEGREES,
@@ -23,6 +23,7 @@ class ManimMLConfig:
     @color_scheme.setter
     def color_scheme(self, value):
         if isinstance(value, str):
+            self._color_scheme = light_mode
             if value == "dark_mode":
                 self._color_scheme = dark_mode
             elif value == "light_mode":

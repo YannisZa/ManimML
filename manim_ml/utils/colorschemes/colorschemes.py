@@ -20,7 +20,7 @@ dark_mode = ColorScheme(
 light_mode = ColorScheme(
     primary_color=BLUE,
     secondary_color=BLACK,
-    active_color=ORANGE,
+    active_color=BLUE,
     text_color=BLACK,
     background_color=WHITE
 )

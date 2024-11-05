@@ -17,7 +17,7 @@ class ActivationFunction(ABC, VGroup):
         y_length=0.3,
         show_function_name=True,
         active_color=manim_ml.config.color_scheme.active_color,
-        plot_color=manim_ml.config.color_scheme.primary_color,
+        plot_color=manim_ml.config.color_scheme.secondary_color,
         rectangle_color=manim_ml.config.color_scheme.secondary_color,
     ):
         super(VGroup, self).__init__()

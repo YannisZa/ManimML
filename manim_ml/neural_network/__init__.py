@@ -40,3 +40,7 @@ from manim_ml.neural_network.layers.triplet_to_feed_forward import TripletToFeed
 from manim_ml.neural_network.layers.triplet import TripletLayer
 from manim_ml.neural_network.layers.vector import VectorLayer
 from manim_ml.neural_network.layers.math_operation_layer import MathOperationLayer
+from manim_ml.neural_network.layers.input_layer import InputLayer
+from manim_ml.neural_network.layers.output_layer import OutputLayer
+from manim_ml.neural_network.layers.input_to_feed_forward import InputToFeedForward
+from manim_ml.neural_network.layers.feed_forward_to_output import FeedForwardToOutput

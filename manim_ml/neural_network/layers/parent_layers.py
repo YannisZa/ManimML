@@ -100,6 +100,9 @@ class BlankConnective(ConnectiveLayer):
 
     def make_forward_pass_animation(self, run_time=1.5, layer_args={}, **kwargs):
         return AnimationGroup(run_time=run_time)
+    
+    def make_backward_pass_animation(self, run_time=1.5, layer_args={}, **kwargs):
+        return AnimationGroup(run_time=run_time)
 
     @override_animation(Create)
     def _create_override(self):

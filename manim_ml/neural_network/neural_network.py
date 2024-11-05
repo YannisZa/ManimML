@@ -31,6 +31,7 @@ class NeuralNetwork(Group):
         self,
         input_layers,
         layer_spacing=0.2,
+        default_layer_spacing=0.2,
         animation_dot_color=manim_ml.config.color_scheme.active_color,
         edge_width=2.5,
         dot_radius=0.03,
@@ -43,7 +44,8 @@ class NeuralNetwork(Group):
         self.input_layers_dict = self.make_input_layers_dict(input_layers)
         self.input_layers = ListGroup(*self.input_layers_dict.values())
         self.edge_width = edge_width
-        self.layer_spacing = layer_spacing
+        self.default_layer_spacing = default_layer_spacing
+        self.layer_spacing = layer_spacing if getattr(layer_spacing,"__len__",False) else [default_layer_spacing]*len(self.input_layers)
         self.animation_dot_color = animation_dot_color
         self.dot_radius = dot_radius
         self.title_text = title
@@ -66,7 +68,7 @@ class NeuralNetwork(Group):
             self.title_text, 
             font_size=DEFAULT_FONT_SIZE / 2
         )
-        self.title.next_to(self, UP * self.layer_spacing, buff=0.25)
+        self.title.next_to(self, UP * self.default_layer_spacing, buff=0.25)
         self.add(self.title)
         # Place layers at correct z index
         self.connective_layers.set_z_index(2)
@@ -160,25 +162,22 @@ class NeuralNetwork(Group):
             current_layer.move_to(previous_layer.get_center())
 
             if layout_direction == "left_to_right":
-                x_shift = (
-                    previous_layer.get_width() / 2
-                    + current_layer.get_width() / 2
-                    + self.layer_spacing
-                )
+                x_shift = previous_layer.width / 2
+                x_shift += current_layer.width / 2
+                x_shift += self.layer_spacing[layer_index-1]
                 shift_vector = np.array([x_shift, 0, 0])
             elif layout_direction == "top_to_bottom":
-                y_shift = -(
-                    (previous_layer.get_width() / 2 + current_layer.get_width() / 2)
-                    + self.layer_spacing
-                )
+                y_shift = -previous_layer.width / 2
+                y_shift -= current_layer.width / 2
+                y_shift -= self.layer_spacing[layer_index-1]
                 shift_vector = np.array([0, y_shift, 0])
             else:
                 raise Exception(f"Unrecognized layout direction: {layout_direction}")
             current_layer.shift(shift_vector)
 
         # After all layers have been placed place their activation functions
-        layer_max_height = max([layer.get_height() for layer in self.input_layers])
-        for current_layer in self.input_layers:
+        layer_max_height = max([layer.height for layer in self.input_layers])
+        for layer_index,current_layer in enumerate(self.input_layers):
             # Place activation function
             if hasattr(current_layer, "activation_function"):
                 if not current_layer.activation_function is None:
@@ -186,8 +185,8 @@ class NeuralNetwork(Group):
                     up_movement = np.array([
                         0,
                         layer_max_height / 2
-                        + current_layer.activation_function.get_height() / 2
-                        + 0.5 * self.layer_spacing,
+                        + current_layer.activation_function.height / 2
+                        + 0.5 * self.layer_spacing[layer_index],
                         0,
                     ])
                     current_layer.activation_function.move_to(
@@ -321,15 +320,106 @@ class NeuralNetwork(Group):
                             time_width=0.2,
                         )
                         break
-
-            layer_forward_pass = AnimationGroup(
-                layer_forward_pass, 
-                connection_input_pass, 
-                lag_ratio=0.0
-            )
+            if connection_input_pass.get_run_time() > 0:
+                layer_forward_pass = AnimationGroup(
+                    layer_forward_pass, 
+                    connection_input_pass, 
+                    lag_ratio=0.0
+                )
+            else:
+                layer_forward_pass = AnimationGroup(
+                    layer_forward_pass,
+                    lag_ratio=0.0
+                )
             all_animations.append(layer_forward_pass)
             # Add the animation to per layer animation
             per_layer_animation_map[layer] = layer_forward_pass
+        # Make the animation group
+        animation_group = Succession(*all_animations, lag_ratio=1.0)
+        if per_layer_animations:
+            return per_layer_animation_map
+        else:
+            return animation_group
+        
+    def make_backward_pass_animation(
+        self, 
+        run_time=None, 
+        passing_flash=True, 
+        layer_args={}, 
+        per_layer_animations=False,
+        **kwargs
+    ):
+        """Generates an animation for feed forward propagation"""
+        all_animations = []
+        per_layer_animation_map = {}
+        per_layer_runtime = (
+            run_time / len(self.all_layers) if not run_time is None else None
+        )
+        for layer_index, layer in enumerate(self.all_layers[::-1]):
+            # Get the layer args
+            if isinstance(layer, ConnectiveLayer):
+                """
+                NOTE: By default a connective layer will get the combined
+                layer_args of the layers it is connecting and itself.
+                """
+                before_layer_args = {}
+                current_layer_args = {}
+                after_layer_args = {}
+                if layer.output_layer in layer_args:
+                    before_layer_args = layer_args[layer.output_layer]
+                if layer in layer_args:
+                    current_layer_args = layer_args[layer]
+                if layer.input_layer in layer_args:
+                    after_layer_args = layer_args[layer.input_layer]
+                # Merge the two dicts
+                current_layer_args = {
+                    **before_layer_args,
+                    **current_layer_args,
+                    **after_layer_args,
+                }
+            else:
+                current_layer_args = {}
+                if layer in layer_args:
+                    current_layer_args = layer_args[layer]
+            # Perform the forward pass of the current layer
+            layer_backward_pass = layer.make_backward_pass_animation(
+                layer_args=current_layer_args, run_time=per_layer_runtime, **kwargs
+            )
+            # Animate a forward pass for incoming connections
+            connection_output_pass = AnimationGroup()
+            for connection in self.connections[::-1]:
+                
+                connection_copy = NetworkConnection(
+                    connection.end_mobject,
+                    connection.start_mobject,
+                    arc_direction=connection.arc_direction,
+                    buffer=connection.buffer
+                )
+
+                if isinstance(layer, ConnectiveLayer):
+                    output_layer = layer.output_layer
+                    if connection_copy.end_mobject == output_layer:
+                        connection_output_pass = ShowPassingFlash(
+                            connection_copy,
+                            run_time=layer_backward_pass.run_time,
+                            time_width=0.2,
+                        )
+                        break
+
+            if connection_output_pass.get_run_time() > 0:
+                layer_backward_pass = AnimationGroup(
+                    layer_backward_pass, 
+                    connection_output_pass, 
+                    lag_ratio=0.0
+                )
+            else:
+                layer_backward_pass = AnimationGroup(
+                    layer_backward_pass,
+                    lag_ratio=0.0
+                )
+            all_animations.append(layer_backward_pass)
+            # Add the animation to per layer animation
+            per_layer_animation_map[layer] = layer_backward_pass
         # Make the animation group
         animation_group = Succession(*all_animations, lag_ratio=1.0)
         if per_layer_animations:
@@ -352,9 +442,10 @@ class NeuralNetwork(Group):
         for layer in self.all_layers:
             layer_animation = Create(layer)
             # Make titles
-            create_title = Create(layer.title)
+            # create_title = Create(layer.title)
             # Create layer animation group
-            animation_group = AnimationGroup(layer_animation, create_title)
+            # animation_group = AnimationGroup(layer_animation, create_title)
+            animation_group = AnimationGroup(layer_animation)
             animations.append(animation_group)
 
         animation_group = AnimationGroup(*animations, lag_ratio=1.0)
@@ -376,6 +467,7 @@ class NeuralNetwork(Group):
             layer.scale(scale_factor, **kwargs)
         # Place layers with scaled spacing
         self.layer_spacing *= scale_factor
+        self.default_layer_spacing *= scale_factor
         # self.connective_layers, self.all_layers = self._construct_connective_layers()
         self._place_layers(layout=self.layout, layout_direction=self.layout_direction)
         self._place_connective_layers()
@@ -407,7 +499,7 @@ class NeuralNetwork(Group):
             inner_string += f"{repr(layer)}("
             for key in metadata:
                 value = getattr(layer, key)
-                if not value is "":
+                if not value == "":
                     inner_string += f"{key}={value}, "
             inner_string += "),\n"
         inner_string = textwrap.indent(inner_string, "    ")

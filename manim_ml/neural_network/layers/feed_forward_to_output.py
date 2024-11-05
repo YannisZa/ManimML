@@ -4,13 +4,14 @@ import numpy as np
 from manim import *
 from manim_ml.neural_network.layers.feed_forward import FeedForwardLayer
 from manim_ml.neural_network.layers.parent_layers import ConnectiveLayer
+from manim_ml.neural_network.layers.output_layer import OutputLayer
 import manim_ml
 
-class FeedForwardToFeedForward(ConnectiveLayer):
-    """Layer for connecting FeedForward layer to FeedForwardLayer"""
+class FeedForwardToOutput(ConnectiveLayer):
+    """Layer for connecting InputOutput layer to FeedForwardLayer"""
 
     input_class = FeedForwardLayer
-    output_class = FeedForwardLayer
+    output_class = OutputLayer
 
     def __init__(
         self,
@@ -44,15 +45,14 @@ class FeedForwardToFeedForward(ConnectiveLayer):
     def construct_edges(self):
         # Go through each node in the two layers and make a connecting line
         edges = []
-        for node_i in self.input_layer.node_group:
-            for node_j in self.output_layer.node_group:
-                line = Line(
-                    node_i.get_center(),
-                    node_j.get_center(),
-                    color=self.edge_color,
-                    stroke_width=self.edge_width,
-                )
-                edges.append(line)
+        for i in range(self.output_layer.num_nodes):
+            line = Line(
+                self.input_layer.node_group[i].get_center(),
+                self.output_layer.node_group[i].get_center(),
+                color=self.edge_color,
+                stroke_width=self.edge_width,
+            )
+            edges.append(line)
 
         edges = VGroup(*edges)
         return edges
@@ -71,7 +71,7 @@ class FeedForwardToFeedForward(ConnectiveLayer):
     def make_forward_pass_animation(
         self, layer_args={}, run_time=1, feed_forward_dropout=0.0, **kwargs
     ):
-        """Animation for passing information from one FeedForwardLayer to the next"""
+        """Animation for passing information from the FeedForwardLayer to the output layer"""
         path_animations = []
         dots = []
         for edge_index, edge in enumerate(self.edges):
@@ -109,7 +109,7 @@ class FeedForwardToFeedForward(ConnectiveLayer):
     def make_backward_pass_animation(
         self, layer_args={}, run_time=1, feed_forward_dropout=0.0, **kwargs
     ):
-        """Animation for passing information from the next FeedForwardLayer to the previous"""
+        """Animation for passing information from the output layer to the FeedForwardLayer"""
         path_animations = []
         dots = []
         for edge_index, _edge in enumerate(self.edges):
@@ -123,7 +123,7 @@ class FeedForwardToFeedForward(ConnectiveLayer):
                     radius=self.dot_radius,
                 )
                 edge = _edge.copy()
-                edge.put_start_and_end_on(edge.get_end(),edge.get_start())
+                edge = edge.put_start_and_end_on(_edge.get_end(), _edge.get_start())
                 # Add to dots group
                 dots.append(dot)
                 # Make the animation
@@ -145,6 +145,7 @@ class FeedForwardToFeedForward(ConnectiveLayer):
         path_animations = AnimationGroup(*path_animations)
 
         return path_animations
+    
 
     def modify_edge_colors(self, colors=None, magnitudes=None, color_scheme="inferno"):
         """Changes the colors of edges"""

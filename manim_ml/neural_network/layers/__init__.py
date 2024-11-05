@@ -32,6 +32,8 @@ from .paired_query import PairedQueryLayer
 from .paired_query_to_feed_forward import PairedQueryToFeedForward
 from .max_pooling_2d import MaxPooling2DLayer
 from .feed_forward_to_math_operation import FeedForwardToMathOperation
+from .feed_forward_to_output import FeedForwardToOutput
+from .input_to_feed_forward import InputToFeedForward
 
 connective_layers_list = (
     EmbeddingToFeedForward,
@@ -49,5 +51,7 @@ connective_layers_list = (
     Convolutional2DToMaxPooling2D,
     MaxPooling2DToConvolutional2D,
     MaxPooling2DToFeedForward,
-    FeedForwardToMathOperation
+    FeedForwardToMathOperation,
+    FeedForwardToOutput,
+    InputToFeedForward
 )

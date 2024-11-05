@@ -18,8 +18,8 @@ class NetworkConnection(VGroup):
         buffer=0.0,
         arc_distance=0.2,
         stroke_width=2.0,
-        color=WHITE,
-        active_color=ORANGE,
+        color=BLACK,
+        active_color=BLUE,
     ):
         """Creates an arrow with right angles in it connecting
         two mobjects.
@@ -59,21 +59,29 @@ class NetworkConnection(VGroup):
     def make_mobjects(self):
         """Makes the submobjects"""
         if self.start_mobject.get_center()[0] < self.end_mobject.get_center()[0]:
-            left_mobject = self.start_mobject
-            right_mobject = self.end_mobject
+            left_to_right = True
         else:
-            right_mobject = self.start_mobject
-            left_mobject = self.end_mobject
+            left_to_right = False
         if self.arc_direction == "straight":
             # Make an arrow
-            self.straight_arrow = Arrow(
-                start=left_mobject.get_right() + np.array([self.buffer, 0.0, 0.0]),
-                end=right_mobject.get_left() + np.array([-1 * self.buffer, 0.0, 0.0]),
-                color=WHITE,
-                fill_color=WHITE,
-                stroke_opacity=1.0,
-                buff=0.0,
-            )
+            if left_to_right:
+                self.straight_arrow = Arrow(
+                    start=self.start_mobject.get_right() + np.array([self.buffer, 0.0, 0.0]),
+                    end=self.end_mobject.get_left() + np.array([-1 * self.buffer, 0.0, 0.0]),
+                    color=WHITE,
+                    fill_color=WHITE,
+                    stroke_opacity=1.0,
+                    buff=0.0,
+                )
+            else:
+                self.straight_arrow = Arrow(
+                    start=self.start_mobject.get_left() + np.array([-1 * self.buffer, 0.0, 0.0]),
+                    end=self.end_mobject.get_right() + np.array([self.buffer, 0.0, 0.0]),
+                    color=WHITE,
+                    fill_color=WHITE,
+                    stroke_opacity=1.0,
+                    buff=0.0,
+                )
             self.add(self.straight_arrow)
         else:
             # Figure out the direction of the arc
@@ -84,27 +92,27 @@ class NetworkConnection(VGroup):
             # figure out how large to make each line
             # Whichever mobject has a critical point the farthest
             # distance in the direction_vector direction we will use that end
-            left_mobject_critical_point = left_mobject.get_critical_point(direction_vector)
-            right_mobject_critical_point = right_mobject.get_critical_point(direction_vector)
+            start_mobject_critical_point = self.start_mobject.get_critical_point(direction_vector)
+            end_mobject_critical_point = self.end_mobject.get_critical_point(direction_vector)
             # Take the dot product of each
             # These dot products correspond to the orthogonal projection
             # onto the direction vectors
-            left_dot_product = np.dot(
-                left_mobject_critical_point, 
+            start_dot_product = np.dot(
+                start_mobject_critical_point, 
                 direction_vector
             )
-            right_dot_product = np.dot(
-                right_mobject_critical_point, 
+            end_dot_product = np.dot(
+                end_mobject_critical_point, 
                 direction_vector
             )
-            extra_distance = abs(left_dot_product - right_dot_product)
+            extra_distance = abs(start_dot_product - end_dot_product)
             # The difference between the dot products 
-            if left_dot_product < right_dot_product:
+            if start_dot_product < end_dot_product:
                 right_is_farthest = False
             else:
                 right_is_farthest = True
             # Make the start arc piece
-            start_line_start = left_mobject.get_critical_point(direction_vector)
+            start_line_start = self.start_mobject.get_critical_point(direction_vector)
             start_line_start += direction_vector * self.buffer
             start_line_end = start_line_start + direction_vector * self.arc_distance
             if not right_is_farthest:
@@ -116,7 +124,7 @@ class NetworkConnection(VGroup):
                 stroke_width=self.stroke_width,
             )
             # Make the end arc piece with an arrow
-            end_line_end = right_mobject.get_critical_point(direction_vector)
+            end_line_end = self.end_mobject.get_critical_point(direction_vector)
             end_line_end += direction_vector * self.buffer
             end_line_start = end_line_end + direction_vector * self.arc_distance
             if right_is_farthest:
