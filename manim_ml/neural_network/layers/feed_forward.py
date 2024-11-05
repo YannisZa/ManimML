@@ -127,10 +127,10 @@ class FeedForwardLayer(VGroupNeuralNetworkLayer):
             # Make highlight animation
             succession = Succession(
                 ApplyMethod(
-                    self.node_group.set_color, self.animation_dot_color, run_time=0.25
+                    self.node_group.set_color, self.animation_dot_color, run_time=0.15
                 ),
-                Wait(1.0),
-                ApplyMethod(self.node_group.set_color, self.node_color, run_time=0.2)
+                Wait(0.5),
+                ApplyMethod(self.node_group.set_color, self.node_color, run_time=0.15)
             )
             if not self.activation_function is None:
                 animation_group = AnimationGroup(
@@ -150,10 +150,10 @@ class FeedForwardLayer(VGroupNeuralNetworkLayer):
             # Make highlight animation
             succession = Succession(
                 ApplyMethod(
-                    self.node_group.set_color, self.animation_dot_color, run_time=0.25
+                    self.node_group.set_color, self.animation_dot_color, run_time=0.15
                 ),
-                Wait(1.0),
-                ApplyMethod(self.node_group.set_color, self.node_color, run_time=0.2)
+                Wait(0.5),
+                ApplyMethod(self.node_group.set_color, self.node_color, run_time=0.15)
             )
             return succession
 

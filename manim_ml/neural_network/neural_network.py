@@ -398,7 +398,7 @@ class NeuralNetwork(Group):
 
                 if isinstance(layer, ConnectiveLayer):
                     output_layer = layer.output_layer
-                    if connection_copy.end_mobject == output_layer:
+                    if connection_copy.start_mobject == output_layer:
                         connection_output_pass = ShowPassingFlash(
                             connection_copy,
                             run_time=layer_backward_pass.run_time,
